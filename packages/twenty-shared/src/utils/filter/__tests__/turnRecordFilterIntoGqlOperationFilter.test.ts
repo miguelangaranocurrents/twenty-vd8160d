@@ -256,7 +256,9 @@ describe('turnRecordFilterIntoRecordGqlOperationFilter', () => {
         fieldMetadataItemById,
       });
 
-      expect(result).toEqual({ not: { amount: { eq: 42 } } });
+      expect(result).toEqual({
+        or: [{ not: { amount: { eq: 42 } } }, { amount: { is: 'NULL' } }],
+      });
     });
 
     it('should handle GREATER_THAN_OR_EQUAL operand', () => {

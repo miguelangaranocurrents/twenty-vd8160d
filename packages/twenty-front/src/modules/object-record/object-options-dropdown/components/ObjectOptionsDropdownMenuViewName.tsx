@@ -8,7 +8,6 @@ import { useAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useAtomC
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
 import { type View } from '@/views/types/View';
-import { useUpdateViewFromCurrentState } from '@/views/view-picker/hooks/useUpdateViewFromCurrentState';
 import { viewPickerIsDirtyComponentState } from '@/views/view-picker/states/viewPickerIsDirtyComponentState';
 import { viewPickerIsPersistingComponentState } from '@/views/view-picker/states/viewPickerIsPersistingComponentState';
 import { viewPickerSelectedIconComponentState } from '@/views/view-picker/states/viewPickerSelectedIconComponentState';
@@ -74,24 +73,10 @@ export const ObjectOptionsDropdownMenuViewName = ({
   const { setAndPersistViewName, setAndPersistViewIcon } =
     useUpdateObjectViewOptions();
 
-  const { updateViewFromCurrentState } = useUpdateViewFromCurrentState();
   const [viewName, setViewName] = useState(currentView?.name);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const { dropdownId } = useObjectOptionsDropdown();
-
-  useHotkeysOnFocusedElement({
-    keys: [Key.Enter],
-    callback: async () => {
-      if (viewPickerIsPersisting) {
-        return;
-      }
-
-      await updateViewFromCurrentState();
-    },
-    focusId: dropdownId,
-    dependencies: [viewPickerIsPersisting, updateViewFromCurrentState],
-  });
 
   const handleIconChange = ({ iconKey }: { iconKey: string }) => {
     setViewPickerIsDirty(true);
@@ -102,6 +87,19 @@ export const ObjectOptionsDropdownMenuViewName = ({
   const handleViewNameChange = useDebouncedCallback((value: string) => {
     setAndPersistViewName(value, currentView);
   }, 500);
+
+  useHotkeysOnFocusedElement({
+    keys: [Key.Enter],
+    callback: () => {
+      if (viewPickerIsPersisting) {
+        return;
+      }
+
+      handleViewNameChange.flush();
+    },
+    focusId: dropdownId,
+    dependencies: [viewPickerIsPersisting, handleViewNameChange],
+  });
 
   useEffect(() => {
     setViewPickerSelectedIcon(currentView.icon);
